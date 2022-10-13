@@ -30,12 +30,12 @@ function doLogin($username,$password)
 	if($count == 1)
 	{
            echo "Login succesful!";
-	   return "\nLogin succesful!";
+	   return true;
 	}
 	else
 	{
 	   echo" login unsuccesful bicho";
-	   return "\nLogin unsuccesful bitcho";
+	   return false;
 	}
 }
 
@@ -63,16 +63,16 @@ function createUser($UserID, $username, $password)
         if($count == 1)
         {
            echo "\nUser already exists!";
-           return "\nUser already exists";
+           return false;
         }
         else
         {
 	   $registerQuery = "INSERT into users
-		   VALUES ('$UserID', '$username', '$password')";
+		   VALUES ('$email', '$username', '$password')";
 	
 	   $result   = mysqli_query($conn, $registerQuery);	
 	   echo "\nUser created succesfully";
-           return "\nUser created succesfully";
+           return true;
         }
 }
 function requestProcessor($request)
@@ -95,7 +95,7 @@ function requestProcessor($request)
  
   case "create_user":
 	  echo "Create User request recieved\n\n";
-      return createUser($request['UserID'],$request['username'],$request['password']);
+      return createUser($request['email'],$request['username'],$request['password']);
   }
   return array("returnCode" => '0', 'message'=>"Server received request and processed\n\n");
 }

@@ -15,10 +15,10 @@ else
 }
 
 $request = array();
-$request['type'] = "create_user";
-$request['UserID'] = "2468";
-$request['username'] = "BOSS";
-$request['password'] = "eatmybutt";
+$request['type'] = "login";
+$request['email'] = "email@pizza.com";
+$request['username'] = "jpizza1";
+$request['password'] = 12345;
 $request['message'] = $msg;
 $response = $client->send_request($request);
 //$response = $client->publish($request);
