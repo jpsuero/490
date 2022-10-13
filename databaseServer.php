@@ -5,8 +5,19 @@ require_once('get_host_info.inc');
 require_once('rabbitMQLib.inc');
 
 
+//logging stuff
+require_once __DIR__.'/vendor/autoload.php';
+
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
+//global error msg variable
+$errorMsg;
+
 function doLogin($username,$password)
 {    
+  //global variable call
+  global $errorMsg;
+  global $channel;
   //database connection
   //create connection
  
@@ -33,17 +44,21 @@ function doLogin($username,$password)
 	   return true;
 	}
 	else
-	{
-	   echo" login unsuccesful bicho";
+	{	
+	   $errorMsg = "invalid username or password";
+	   $msg = new AMQPMessage($errorMsg);
+           $channel -> basic_publish($msg, 'logs');
+	   echo "error msg sent to log file";
 	   return false;
 	}
 }
 
 function createUser($UserID, $username, $password)
 {
-	//database connection
-  //create connection
+  //global variable call
+    global $errorMsg;
 
+  //database connection
   $conn = new mysqli('127.0.0.1', 'testUser', '12345', 'testdb');
 
 
@@ -62,7 +77,7 @@ function createUser($UserID, $username, $password)
 
         if($count == 1)
         {
-           echo "\nUser already exists!";
+           $errorMsg ="Username already exists in database!";
            return false;
         }
         else
@@ -81,7 +96,8 @@ function requestProcessor($request)
   var_dump($request);
   if(!isset($request['type']))
   {
-    return "ERROR: unsupported message type";
+	  $errorMsg = "unsuported message type receieved in database server";
+	  return "ERROR: unsupported message type";
   }
   switch ($request['type'])
   {
@@ -102,9 +118,25 @@ function requestProcessor($request)
 
 $server = new rabbitMQServer("testRabbitMQ.ini","dbServer");
 
+//logging stuff
+$connection = new AMQPStreamConnection('127.0.0.1', '5672', 'guest', 'guest');
+$channel = $connection->channel();
+
+$channel->exchange_declare('logs', 'fanout', false, false, false);
+
+if(!empty($errorMsg))
+{
+	$msg = new MAQPMessage($errorMsg);
+	$channel -> basic_publish($msg, 'logs');
+}
+
 echo "Database Server BEGIN\n\n".PHP_EOL;
 $server->process_requests('requestProcessor');
 echo "testRabbitMQServer END".PHP_EOL;
+
+
+$channel->close();
+$connection->close();
 exit();
 ?>
 
