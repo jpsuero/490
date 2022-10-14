@@ -4,29 +4,29 @@
 require_once __DIR__.'/vendor/autoload.php';
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 
-
-require_once('path.inc');
-require_once('get_host_info.inc');
-require_once('rabbitMQLib.inc');
-
-$connection = new AMQPStreamConnection('localhost', '5672', 'guest', 'guest');
+$connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test', 'testHost');
 $channel = $connection->channel();
 
 $channel->exchange_declare('logs', 'fanout', false, false, false);
 
+list($queue_name, ,) = $channel->queue_declare("", false, false, true, false);
 
-$data = implode('', array_slice($argv, 1));
-if (empty($data))
+$channel->queue_bind($queue_name, 'logs');
+
+echo " [*] Waiting for logs. To exit press CTRL+C\n";
+
+$callback = function ($msg) 
 {
-	$data = "they call me mr. bombtastic";
+    echo ' [x] ', $msg->body, "\n";
+};
+
+$channel->basic_consume($queue_name, '', false, true, false, false, $callback);
+
+while ($channel->is_open())
+{
+    $channel->wait();
 }
-$msg = new AMQPMessage($data);
-
-$channel->basic_publish($msg, 'logs');
-
-echo '[x] Sent ', $data, "\n";
 
 $channel->close();
 $connection->close();

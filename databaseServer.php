@@ -10,6 +10,17 @@ require_once __DIR__.'/vendor/autoload.php';
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+
+
+//create connection to rbmq for logging
+$connection = new AMQPStreamConnection('172.23.46.192', '5672', 'test', 'test', 'testHost');
+//create channel
+$channel = $connection->channel();
+//connect to logs exchange
+$channel->exchange_declare('logs', 'fanout', false, false, false);
+
+
+
 //global error msg variable
 $errorMsg;
 
@@ -45,8 +56,11 @@ function doLogin($username,$password)
 	}
 	else
 	{	
-	   $errorMsg = "invalid username or password";
-	   $msg = new AMQPMessage($errorMsg);
+	   //create error message	
+		$errorMsg = "invalid username or password";
+	   //set push msg to error message
+		$msg = new AMQPMessage($errorMsg);
+	   // send msg to log file(s)
            $channel -> basic_publish($msg, 'logs');
 	   echo "error msg sent to log file";
 	   return false;
@@ -56,7 +70,8 @@ function doLogin($username,$password)
 function createUser($UserID, $username, $password)
 {
   //global variable call
-    global $errorMsg;
+	global $errorMsg;
+	global $channel;
 
   //database connection
   $conn = new mysqli('127.0.0.1', 'testUser', '12345', 'testdb');
@@ -77,8 +92,14 @@ function createUser($UserID, $username, $password)
 
         if($count == 1)
         {
-           $errorMsg ="Username already exists in database!";
-           return false;
+           //create error message       
+                $errorMsg = "username already exists in database";
+           //set push msg to error message
+                $msg = new AMQPMessage($errorMsg);
+           // send msg to log file(s)
+                $channel -> basic_publish($msg, 'logs');
+           echo "error msg sent to log file";          
+	   return false;
         }
         else
         {
@@ -96,7 +117,13 @@ function requestProcessor($request)
   var_dump($request);
   if(!isset($request['type']))
   {
-	  $errorMsg = "unsuported message type receieved in database server";
+	  //create error message       
+                $errorMsg = "invalid request type sent to database server";
+           //set push msg to error message
+                $msg = new AMQPMessage($errorMsg);
+           // send msg to log file(s)
+           $channel -> basic_publish($msg, 'logs');
+           echo "error msg sent to log file";
 	  return "ERROR: unsupported message type";
   }
   switch ($request['type'])
@@ -118,17 +145,6 @@ function requestProcessor($request)
 
 $server = new rabbitMQServer("testRabbitMQ.ini","dbServer");
 
-//logging stuff
-$connection = new AMQPStreamConnection('127.0.0.1', '5672', 'guest', 'guest');
-$channel = $connection->channel();
-
-$channel->exchange_declare('logs', 'fanout', false, false, false);
-
-if(!empty($errorMsg))
-{
-	$msg = new MAQPMessage($errorMsg);
-	$channel -> basic_publish($msg, 'logs');
-}
 
 echo "Database Server BEGIN\n\n".PHP_EOL;
 $server->process_requests('requestProcessor');

@@ -17,8 +17,8 @@ else
 $request = array();
 $request['type'] = "login";
 $request['email'] = "email@pizza.com";
-$request['username'] = "DONTWORKPLS";
-$request['password'] = 9999;
+$request['username'] = "poop";
+$request['password'] = 1234;
 $request['message'] = $msg;
 $response = $client->send_request($request);
 //$response = $client->publish($request);
