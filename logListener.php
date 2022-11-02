@@ -5,7 +5,7 @@ require_once __DIR__.'/vendor/autoload.php';
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 
-$connection = new AMQPStreamConnection('localhost', 5672, 'test', 'test', 'testHost');
+$connection = new AMQPStreamConnection('172.23.46.192', 5672, 'help', 'help', 'testHost');
 $channel = $connection->channel();
 
 $channel->exchange_declare('logs', 'fanout', false, false, false);
