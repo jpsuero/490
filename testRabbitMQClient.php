@@ -15,11 +15,11 @@ else
 }
 
 $request = array();
-$request['type'] = "login";
-$request['email'] = "bob";
-$request['username'] = "bob";
-$request['password'] = 111;
-$request['message'] = $msg;
+$request['type'] = "createOutfit";
+$request['uid'] = "1";
+$request['top'] = "Men Single Breasted Satin Shirt";
+$request['bottom'] = "Men Khaki Slim Pant";
+$request['name'] = 'black';
 $response = $client->send_request($request);
 //$response = $client->publish($request);
 
